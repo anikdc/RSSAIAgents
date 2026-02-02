@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+agent.log
+briefing_data.json
+.DS_Store

@@ -1,0 +1,9 @@
+feedparser
+scikit-learn
+numpy<2.0.0
+google-generativeai
+beautifulsoup4
+requests
+streamlit
+python-dotenv
+lxml

@@ -11,7 +11,7 @@ from src.orchestrator import Orchestrator
 
 st.set_page_config(
     page_title="AI News Briefing",
-    page_icon="📰",
+    page_icon="",
     layout="wide"
 )
 
@@ -26,7 +26,7 @@ def load_data():
     except:
         return None
 
-st.title("📰 AI News Briefing")
+st.title("AI News Briefing")
 
 data = load_data()
 
@@ -46,7 +46,7 @@ else:
     
     with main_col:
         briefing_type = data.get('briefing_type', 'Trending Narrative')
-        st.markdown(f"### 📢 {briefing_type}")
+        st.markdown(f"### {briefing_type}")
         
         # Main Briefing Card
         with st.container(border=True):
@@ -64,7 +64,7 @@ else:
 
     with side_col:
         st.subheader("Controls")
-        if st.button("🔄 Trigger Agent Run"):
+        if st.button("Trigger Agent Run"):
             with st.spinner("Running agent pipeline (Polling -> Clustering -> Synthesis)..."):
                 try:
                     orchestrator = Orchestrator()
@@ -75,7 +75,7 @@ else:
                 except Exception as e:
                     st.error(f"Error running pipeline: {e}")
 
-        st.subheader("📡 Raw Feed (Latest)")
+        st.subheader("Raw Feed (Latest)")
         st.caption("All polled articles in valid window")
         
         raw_feed = data.get('all_articles', [])

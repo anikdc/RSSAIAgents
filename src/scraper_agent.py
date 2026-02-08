@@ -45,11 +45,20 @@ class ScraperAgent:
         text = soup.get_text(separator=' ')
         
         # Break into lines and remove leading/trailing space on each
-        lines = (line.strip() for line in text.splitlines())
+        lines = []
+        for line in text.splitlines():
+            lines.append(line.strip())
         # Break multi-headlines into a line each
-        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        chunks = []
+        for line in lines:
+            for phrase in line.split("  "):
+                chunks.append(phrase.strip())
         # Drop blank lines
-        text = '\n'.join(chunk for chunk in chunks if chunk)
+        final_chunks = []
+        for chunk in chunks:
+            if chunk:
+                final_chunks.append(chunk)
+        text = '\n'.join(final_chunks)
         
         # Limit to reasonable length (e.g., 5000 chars) to fit context window if needed, 
         # though Gemini can handle large context.

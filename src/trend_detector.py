@@ -51,7 +51,10 @@ class TrendDetector:
         if not articles:
             return []
             
-        headlines = [f"{art['title']} {art.get('summary', '')[:100]}" for art in articles]
+        headlines = []
+        for art in articles:
+            summary = art.get('summary', '')[:100]
+            headlines.append(f"{art['title']} {summary}")
         vectors = self.vectorize_texts(headlines)
         
         if not vectors:

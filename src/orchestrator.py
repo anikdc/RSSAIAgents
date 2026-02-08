@@ -45,7 +45,7 @@ class Orchestrator:
         logger.info("Starting pipeline run...")
         feeds = self.load_feeds()
         
-        # 1. Poll Feeds
+        # Poll Feeds
         articles = self.poller.fetch_feeds(feeds, time_window_hours=24.0) # Using 24h for demo purposes to ensure we get data
         # Note: User request asked for 15 min poll and 1h window for trends. 
         # For initial run/demo, 24h ensures we find something.
@@ -54,14 +54,21 @@ class Orchestrator:
             logger.info("No articles found.")
             return
 
-        # 2. Detect Trends
+        # Detect Trends
         logger.info(f"Analyzing {len(articles)} articles for trends...")
         clusters = self.detector.detect_clusters(articles)
         
         # Filter for significant clusters
         # Priority 1: Trend (>5), Priority 2: Emerging (>2), Priority 3: Latest (Fallback)
-        significant_clusters = [c for c in clusters if len(c) >= 5]
-        emerging_clusters = [c for c in clusters if 2 <= len(c) < 5]
+        significant_clusters = []
+        for c in clusters:
+            if len(c) >= 5:
+                significant_clusters.append(c)
+
+        emerging_clusters = []
+        for c in clusters:
+            if 2 <= len(c) < 5:
+                emerging_clusters.append(c)
         
         briefing_type = "General Update"
         target_articles = []
@@ -81,16 +88,23 @@ class Orchestrator:
             target_articles = articles[:5]
             logger.info("No clusters found. Processing latest articles.")
 
-        # 3. Scrape URLs
+        # Scrape URLs
         # Extract unique URLs from target articles
-        urls = list(set([a['link'] for a in target_articles]))[:5]
+        urls = []
+        seen_links = set()
+        for a in target_articles:
+            link = a['link']
+            if link not in seen_links:
+                urls.append(link)
+                seen_links.add(link)
+        urls = urls[:5]
         scrape_results = self.scraper.scrape_urls(urls)
         
-        # 4. Synthesize
+        # Synthesize
         logger.info(f"Synthesizing briefing ({briefing_type})...")
         briefing_text = self.synthesizer.synthesize_briefing(scrape_results)
         
-        # 5. Save Results
+        # Save Results
         output = {
             "timestamp": datetime.now().isoformat(),
             "briefing_type": briefing_type,
@@ -118,5 +132,4 @@ class Orchestrator:
 
 if __name__ == "__main__":
     orchestrator = Orchestrator()
-    # For testing, just run once
     orchestrator.run_pipeline()

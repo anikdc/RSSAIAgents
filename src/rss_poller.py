@@ -10,7 +10,7 @@ class RSSPoller:
     def __init__(self):
         pass
 
-    def fetch_feeds(self, feeds_list, time_window_hours=1.0):
+    def fetch_feeds(self, feeds_list, time_window_hours=2.0):
         """
         Fetches articles from a list of RSS feeds.
         Returns a list of articles published within the last time_window_hours.

@@ -2,6 +2,9 @@
 
 This project is a Python-based system that polls RSS feeds, detects trending topics using vector clustering, and uses Google Gemini to synthesize a briefing from the clustered articles. It provides a Streamlit interface to view the generated briefing and the latest raw news feed.
 
+## Tentative Flowchart
+<img width="816" height="834" alt="image" src="https://github.com/user-attachments/assets/fd93ed40-3cd1-4bdb-9a12-35690d18d8b9" />
+
 ## Prerequisites
 
 - Python 3.8 or higher
@@ -54,3 +57,4 @@ python src/orchestrator.py
 - src/trend_detector.py: Uses embeddings and clustering (DBSCAN) to group similar articles into trends.
 - src/scraper_agent.py: Fetches the full text of articles from their URLs.
 - src/synthesis_agent.py: Interfaces with the Gemini API to summarize the clustered articles into a coherent narrative.
+

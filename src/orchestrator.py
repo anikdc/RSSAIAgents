@@ -82,6 +82,9 @@ class Orchestrator:
                 logger.warning("No existing articles to process.")
                 return
 
+        # Cap at 90 articles to avoid Gemini 100-request/min free tier limit
+        articles = articles[:90]
+
         # Detect Trends
         logger.info(f"Analyzing {len(articles)} articles for trends using {algorithm}...")
         clusters_res = self.detector.detect_clusters(articles, algorithm=algorithm)

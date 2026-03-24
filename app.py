@@ -23,7 +23,7 @@ def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
             return json.load(f)
-    except:
+    except Exception:
         return None
 
 st.title("AI News Briefing")
@@ -142,4 +142,3 @@ else:
             with st.container(border=True):
                 st.markdown(f"**[{art.get('title', 'Untitled')}]({art.get('link', '#')})**")
                 st.caption(f"{art.get('source', 'Unknown')} • {art.get('published', '')[:16]}")
-

@@ -22,7 +22,7 @@ class TrendDetector:
         # eps is the maximum distance between two samples for one to be considered as in the neighborhood of the other.
         # min_samples is the number of samples (or total weight) in a neighborhood for a point to be considered as a core point.
         # Cosine distance ranges from 0 to 2. Gemini embeddings are often densely packed.
-        self.eps = 0.10 # lowered from 0.25 to prevent mega-clusters
+        self.eps = 0.10 # Significantly lowered from 0.25 to prevent mega-clusters
         self.min_samples = 2 # Minimum articles to form a cluster
         
     def vectorize_texts(self, texts):

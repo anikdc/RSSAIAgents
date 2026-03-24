@@ -63,7 +63,24 @@ else:
                 # Sources for the briefing natively grouped
                 with st.expander(f"View Topics for Trend {trend['trend_id']}"):
                     for source in trend.get('sources', []):
-                        st.markdown(f"- [{source.get('title', 'Link')}]({source.get('link', '#')}) - *{source.get('source', 'Unknown')}*")
+                        verification = source.get("verification_detail", {})
+                        status = source.get("verification_status", "unknown")
+
+                        score = verification.get("credibility_score", "?")
+                        domain = verification.get("domain", "unknown")
+
+                        if status == "verified":
+                            badge = "🟢 VERIFIED"
+                        elif status == "uncertain":
+                            badge = "🟡 UNCERTAIN"
+                        else:
+                            badge = "🔴 SUSPICIOUS"
+
+                        st.markdown(
+                            f"- [{source.get('title','Link')}]({source.get('link','#')}) "
+                            f"({domain})  \n"
+                            f"{badge} • Credibility Score: **{score}**"
+                        )
                 st.divider()
 
         if st.button("Refresh"):

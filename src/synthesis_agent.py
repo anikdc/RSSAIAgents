@@ -13,7 +13,7 @@ class SynthesisAgent:
             logger.warning("GEMINI_API_KEY not found. Synthesis will fail.")
         else:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash') # Standard model
+            self.model = genai.GenerativeModel('gemini-2.5-flash') 
 
     def synthesize_briefing(self, articles_content):
         """

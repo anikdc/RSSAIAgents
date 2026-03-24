@@ -45,19 +45,26 @@ else:
     main_col, side_col = st.columns([2, 1])
     
     with main_col:
-        briefing_type = data.get('briefing_type', 'Trending Narrative')
-        st.markdown(f"### {briefing_type}")
+        st.header("Trending Now")
+        trends = data.get('trends', [])
         
-        # Main Briefing Card
-        with st.container(border=True):
-            st.markdown(data['briefing'])
-            
-        st.markdown(f"**Synthesized from {data.get('trend_size', '?')} sources**")
-        
-        # Sources for the briefing
-        with st.expander("View Briefing Sources"):
-            for source in data.get('sources', []):
-                st.markdown(f"- [{source.get('title', 'Link')}]({source.get('link', '#')}) - *{source.get('source', 'Unknown')}*")
+        if not trends:
+            st.info("No trends detected.")
+        else:
+            for trend in trends:
+                st.markdown(f"### Trend {trend['trend_id']}") #: {trend['briefing_type']}
+                
+                # Main Briefing Card
+                with st.container(border=True):
+                    st.markdown(trend['briefing'])
+                    
+                st.markdown(f"**Synthesized from {trend.get('trend_size', '?')} sources**")
+                
+                # Sources for the briefing natively grouped
+                with st.expander(f"View Topics for Trend {trend['trend_id']}"):
+                    for source in trend.get('sources', []):
+                        st.markdown(f"- [{source.get('title', 'Link')}]({source.get('link', '#')}) - *{source.get('source', 'Unknown')}*")
+                st.divider()
 
         if st.button("Refresh"):
             st.rerun()
@@ -75,14 +82,33 @@ else:
                 except Exception as e:
                     st.error(f"Error running pipeline: {e}")
 
+        st.subheader("Trend Cluster Map")
+        raw_feed = data.get('all_articles', [])
+        if raw_feed:
+            plot_data = []
+            for art in raw_feed:
+                trend_num = art.get('ui_trend_num', -1)
+                if trend_num == -1:
+                    continue # Filter out noise and minor clusters not in top 4
+                
+                # Ensure it's rendered as 1-indexed string categories to match summary
+                cluster_label = f"Trend {trend_num}"
+                plot_data.append({
+                    "x": art.get('x', 0.0),
+                    "y": art.get('y', 0.0),
+                    "Cluster": cluster_label,
+                })
+                
+            # Streamlit scatter chart supports lists of dicts
+            st.scatter_chart(plot_data, x="x", y="y", color="Cluster")
+            
         st.subheader("Raw Feed (Latest)")
         st.caption("All polled articles in valid window")
         
-        raw_feed = data.get('all_articles', [])
         if not raw_feed:
             st.info("No raw articles data available.")
         
-        for art in raw_feed:
+        for art in raw_feed[:15]: # Show top 15 in sidebar to avoid overflow
             with st.container(border=True):
                 st.markdown(f"**[{art.get('title', 'Untitled')}]({art.get('link', '#')})**")
                 st.caption(f"{art.get('source', 'Unknown')} • {art.get('published', '')[:16]}")

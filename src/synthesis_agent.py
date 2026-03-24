@@ -28,15 +28,23 @@ class SynthesisAgent:
         for idx, (url, text) in enumerate(articles_content.items()):
             context += f"--- SOURCE {idx+1} ({url}) ---\n{text[:8000]}\n\n"
 
-        prompt = (
-            "You are an expert news analyst. "
-            "Synthesize these articles into a single coherent narrative briefing. "
-            "Highlight discrepancies between sources if any. "
-            "Focus on the facts and the bigger picture. "
-            "Format nicely in Markdown."
-            "\n\n"
-            f"{context}"
-        )
+        # Load system prompt
+        system_prompt = ""
+        prompt_path = os.path.join(os.path.dirname(__file__), 'systemprompt.txt')
+        try:
+            with open(prompt_path, 'r', encoding='utf-8') as f:
+                system_prompt = f.read()
+        except Exception as e:
+            logger.error(f"Could not load system prompt: {e}")
+            system_prompt = (
+                "You are an expert news analyst. "
+                "Synthesize these articles into a single coherent narrative briefing. "
+                "Highlight discrepancies between sources if any. "
+                "Focus on the facts and the bigger picture. "
+                "Format nicely in Markdown."
+            )
+
+        prompt = f"{system_prompt}\n\n### SOURCES TO SYNTHESIZE:\n\n{context}"
 
         try:
             response = self.model.generate_content(prompt)

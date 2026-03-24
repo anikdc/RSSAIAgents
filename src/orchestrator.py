@@ -54,64 +54,68 @@ class Orchestrator:
             logger.info("No articles found.")
             return
 
+        # Cap at 90 articles to avoid Gemini 100-request/min free tier limit
+        articles = articles[:90]
+
         # Detect Trends
         logger.info(f"Analyzing {len(articles)} articles for trends...")
-        clusters = self.detector.detect_clusters(articles)
+        clusters_res = self.detector.detect_clusters(articles)
+        clusters = clusters_res.get('clusters', [])
+        all_articles = clusters_res.get('articles_with_coords', articles)
         
-        # Filter for significant clusters
-        # Priority 1: Trend (>5), Priority 2: Emerging (>2), Priority 3: Latest (Fallback)
-        significant_clusters = []
-        for c in clusters:
-            if len(c) >= 5:
-                significant_clusters.append(c)
-
-        emerging_clusters = []
-        for c in clusters:
-            if 2 <= len(c) < 5:
-                emerging_clusters.append(c)
+        # Sort all clusters by size
+        sorted_clusters = sorted(clusters, key=len, reverse=True)
+        valid_clusters = [c for c in sorted_clusters if len(c) >= 2]
         
-        briefing_type = "General Update"
-        target_articles = []
+        trends_output = []
         
-        if significant_clusters:
-            briefing_type = "Trending Narrative"
-            target_articles = sorted(significant_clusters, key=len, reverse=True)[0]
-            logger.info(f"Found {len(significant_clusters)} trends. Processing top trend.")
+        # Process up to top 4 trends
+        target_clusters = valid_clusters[:4]
+        
+        if not target_clusters:
+            logger.info("No clusters found. Generating fallback snapshot.")
+            target_clusters = [articles[:5]]
             
-        elif emerging_clusters:
-            briefing_type = "Emerging Topic"
-            target_articles = sorted(emerging_clusters, key=len, reverse=True)[0]
-            logger.info(f"No major trends. Processing top emerging topic.")
+        for i, cluster in enumerate(target_clusters):
+            if len(cluster) >= 5:
+                trend_type = "Trending Narrative"
+            elif len(cluster) >= 2:
+                trend_type = "Emerging Topic"
+            else:
+                trend_type = "Latest News Snapshot"
+                
+            urls = []
+            seen_links = set()
+            for a in cluster:
+                link = a['link']
+                if link not in seen_links:
+                    urls.append(link)
+                    seen_links.add(link)
+            # Scrape up to 3 articles per trend to keep tokens reasonable
+            urls = urls[:3]
+            scrape_results = self.scraper.scrape_urls(urls)
             
-        else:
-            briefing_type = "Latest News Snapshot"
-            target_articles = articles[:5]
-            logger.info("No clusters found. Processing latest articles.")
+            trend_num = i + 1
+            # Tag the articles in this cluster with the synced UI trend number
+            for a in cluster:
+                a['ui_trend_num'] = trend_num
+                
+            logger.info(f"Synthesizing briefing for trend {trend_num} ({trend_type})...")
+            briefing_text = self.synthesizer.synthesize_briefing(scrape_results)
+            
+            trends_output.append({
+                "trend_id": trend_num,
+                "briefing_type": trend_type,
+                "briefing": briefing_text,
+                "sources": cluster,
+                "trend_size": len(cluster)
+            })
 
-        # Scrape URLs
-        # Extract unique URLs from target articles
-        urls = []
-        seen_links = set()
-        for a in target_articles:
-            link = a['link']
-            if link not in seen_links:
-                urls.append(link)
-                seen_links.add(link)
-        urls = urls[:5]
-        scrape_results = self.scraper.scrape_urls(urls)
-        
-        # Synthesize
-        logger.info(f"Synthesizing briefing ({briefing_type})...")
-        briefing_text = self.synthesizer.synthesize_briefing(scrape_results)
-        
         # Save Results
         output = {
             "timestamp": datetime.now().isoformat(),
-            "briefing_type": briefing_type,
-            "briefing": briefing_text,
-            "sources": target_articles, # Metadata for briefing sources
-            "trend_size": len(target_articles),
-            "all_articles": articles[:50] # Save top 50 recent articles for raw feed
+            "trends": trends_output,
+            "all_articles": all_articles[:150] # Save top 150 for the UI cluster map
         }
         
         with open(DATA_FILE, 'w') as f:

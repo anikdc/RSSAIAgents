@@ -4,6 +4,10 @@
     "https://www.theverge.com/rss/index.xml",
     "https://www.wired.com/feed/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "http://feeds.foxnews.com/foxnews/world",
+    "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://www.theguardian.com/world/rss",
     "http://feeds.bbci.co.uk/news/technology/rss.xml",
     "https://hnrss.org/best"
 ]

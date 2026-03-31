@@ -13,6 +13,8 @@ from src.trend_detector import TrendDetector
 from src.scraper_agent import ScraperAgent
 from src.synthesis_agent import SynthesisAgent
 from src.verification_agent import VerificationAgent
+from src.classification_agent import ClassificationAgent
+
 
 # Logging
 logging.basicConfig(
@@ -34,6 +36,7 @@ class Orchestrator:
     def __init__(self):
         self.poller = RSSPoller()
         self.verifier = VerificationAgent()
+        self.classifier = ClassificationAgent()
         self.detector = TrendDetector()
         self.scraper = ScraperAgent()
         self.synthesizer = SynthesisAgent()
@@ -51,7 +54,11 @@ class Orchestrator:
         logger.info(f"Starting pipeline run with algorithm: {algorithm}...")
         
         if not skip_fetch:
-            feeds = self.load_feeds()
+            from src.feed_discovery_agent import FeedDiscoveryAgent
+            agent = FeedDiscoveryAgent()
+            feeds = agent.get_feeds()
+            
+            print("USING FEEDS:", feeds)
 
             # ------------------------------
             # 1️⃣ RSS POLLING
@@ -65,31 +72,62 @@ class Orchestrator:
             # Cap at 90 articles to avoid Gemini 100 request/min free tier limit
             articles = articles[:90]
 
-            # Verify articles
-            logger.info("Verifying articles...")
-            articles = self.verifier.verify(articles)
+            logger.info(f"Fetched {len(articles)} articles")
+
+            # ------------------------------
+            # 2️⃣ VERIFICATION
+            # ------------------------------
+            logger.info("Running verification agent...")
+
+            verified_articles = self.verifier.verify(articles)
+
+            # keep only verified + uncertain
+            verified_articles = [
+                a for a in verified_articles
+                if a.get("verification_status") != "suspicious"
+            ]
+
+            logger.info(f"{len(verified_articles)} articles passed verification")
+
+            if not verified_articles:
+                logger.warning("No verified articles.")
+                return
+
+            # ------------------------------
+            # 3️⃣ CLASSIFICATION
+            # ------------------------------
+            logger.info("Running classification agent...")
+
+            try:
+                classified_articles = self.classifier.classify(verified_articles)
+
+            except Exception as e:
+                logger.error(f"Classification failed: {e}")
+                classified_articles = verified_articles
+
+            articles_to_process = classified_articles
         else:
             logger.info("Skipping fetch/verify. Loading existing articles from data file...")
             try:
                 with open(DATA_FILE, 'r') as f:
                     data = json.load(f)
-                    articles = data.get('all_articles', [])
+                    articles_to_process = data.get('all_articles', [])
             except Exception as e:
                 logger.error(f"Could not load existing articles: {e}")
-                articles = []
+                articles_to_process = []
                 
-            if not articles:
+            if not articles_to_process:
                 logger.warning("No existing articles to process.")
                 return
 
-        # Cap at 90 articles to avoid Gemini 100-request/min free tier limit
-        articles = articles[:90]
-
-        # Detect Trends
-        logger.info(f"Analyzing {len(articles)} articles for trends using {algorithm}...")
-        clusters_res = self.detector.detect_clusters(articles, algorithm=algorithm)
+        # ------------------------------
+        # 4️⃣ TREND DETECTION
+        # ------------------------------
+        logger.info(f"Analyzing {len(articles_to_process)} articles for trends using {algorithm}...")
+        clusters_res = self.detector.detect_clusters(articles_to_process, algorithm=algorithm)
+        
         clusters = clusters_res.get('clusters', [])
-        all_articles = clusters_res.get('articles_with_coords', articles)
+        all_articles = clusters_res.get('articles_with_coords', articles_to_process)
         
         # Sort all clusters by size
         sorted_clusters = sorted(clusters, key=len, reverse=True)
@@ -102,7 +140,7 @@ class Orchestrator:
 
         if not target_clusters:
             logger.info("No clusters found. Using fallback snapshot.")
-            target_clusters = [articles[:5]]
+            target_clusters = [articles_to_process[:5]]
 
 
         # ------------------------------
@@ -122,7 +160,6 @@ class Orchestrator:
             articles_to_scrape = []
 
             for article in cluster:
-
                 link = article.get("link")
 
                 if link and link not in seen_links:
@@ -198,5 +235,4 @@ class Orchestrator:
 if __name__ == "__main__":
 
     orchestrator = Orchestrator()
-
     orchestrator.run_pipeline()

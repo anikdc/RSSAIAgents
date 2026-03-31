@@ -1,0 +1,13 @@
+{
+  "working": [
+    "https://techcrunch.com/feed/",
+    "https://www.wired.com/feed/rss",
+    "https://www.aljazeera.com/xml/rss/all.xml",
+    "https://www.thehindu.com/feeder/default.rss"
+  ],
+  "failed": [
+    "https://techcrunch.com/xmlrpc.php?rsd",
+    "https://www.theverge.com/rss/index.xml",
+    "https://indianexpress.com/xmlrpc.php?rsd"
+  ]
+}

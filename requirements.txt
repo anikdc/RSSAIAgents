@@ -7,3 +7,6 @@ requests
 streamlit
 python-dotenv
 lxml
+hdbscan
+sentence-transformers 
+scikit-learn

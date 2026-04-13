@@ -13,30 +13,52 @@ class SynthesisAgent:
             logger.warning("GEMINI_API_KEY not found. Synthesis will fail.")
         else:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash') # Standard model
+            self.model = genai.GenerativeModel('gemini-3.1-flash-lite-preview') 
 
-    def synthesize_briefing(self, articles_content):
+    def synthesize_briefing(self, articles_content, sources_meta=None):
         """
         Synthesizes a briefing from a list of article texts.
-        articles_content: List of strings (article texts) or Dict {source: text}
+        articles_content: Dict {url: text}
+        sources_meta: Optional list of article dicts with 'title', 'source', 'link' keys,
+                      used to provide richer source labels for inline citations.
         """
         if not articles_content:
             return "No content to synthesize."
 
-        # Prepare context
+        # Build a lookup from URL to article metadata for richer labels
+        meta_lookup = {}
+        if sources_meta:
+            for art in sources_meta:
+                link = art.get("link", "")
+                if link:
+                    meta_lookup[link] = art
+
+        # Prepare context with rich source labels
         context = ""
         for idx, (url, text) in enumerate(articles_content.items()):
-            context += f"--- SOURCE {idx+1} ({url}) ---\n{text[:8000]}\n\n"
+            meta = meta_lookup.get(url, {})
+            source_name = meta.get("source", "Unknown")
+            title = meta.get("title", "Untitled")
+            label = f'SOURCE {idx+1} ({source_name} — "{title}") [{url}]'
+            context += f"--- {label} ---\n{text[:8000]}\n\n"
 
-        prompt = (
-            "You are an expert news analyst. "
-            "Synthesize these articles into a single coherent narrative briefing. "
-            "Highlight discrepancies between sources if any. "
-            "Focus on the facts and the bigger picture. "
-            "Format nicely in Markdown."
-            "\n\n"
-            f"{context}"
-        )
+        # Load system prompt
+        system_prompt = ""
+        prompt_path = os.path.join(os.path.dirname(__file__), 'systemprompt.txt')
+        try:
+            with open(prompt_path, 'r', encoding='utf-8') as f:
+                system_prompt = f.read()
+        except Exception as e:
+            logger.error(f"Could not load system prompt: {e}")
+            system_prompt = (
+                "You are an expert news analyst. "
+                "Synthesize these articles into a single coherent narrative briefing. "
+                "Highlight discrepancies between sources if any. "
+                "Focus on the facts and the bigger picture. "
+                "Format nicely in Markdown."
+            )
+
+        prompt = f"{system_prompt}\n\n### SOURCES TO SYNTHESIZE:\n\n{context}"
 
         try:
             response = self.model.generate_content(prompt)

@@ -58,3 +58,9 @@ python src/orchestrator.py
 - src/scraper_agent.py: Fetches the full text of articles from their URLs.
 - src/synthesis_agent.py: Interfaces with the Gemini API to summarize the clustered articles into a coherent narrative.
 
+## To-Do
+- **Migrate Frontend**: Replace Streamlit with a MERN component stack (MongoDB, Express, React, Node.js).
+- **Automate Pipeline**: Decouple the Python script from the frontend.
+  - Run `orchestrator.py` as an automated background worker (using PM2 and the existing `start_loop` function) or schedule via Windows Task Scheduler/Cron.
+  - Update the Python pipeline to write analytical outputs directly to a MongoDB database rather than JSON.
+  - Build an Express backend to serve data from MongoDB instantly to the React frontend.

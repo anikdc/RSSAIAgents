@@ -1,7 +1,8 @@
 import os
 import google.generativeai as genai
 import numpy as np
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, KMeans, HDBSCAN
+from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_distances
 import logging
 from dotenv import load_dotenv
@@ -20,9 +21,9 @@ class TrendDetector:
         # DBSCAN parameters:
         # eps is the maximum distance between two samples for one to be considered as in the neighborhood of the other.
         # min_samples is the number of samples (or total weight) in a neighborhood for a point to be considered as a core point.
-        # Cosine distance ranges from 0 to 2. Tightly clustered might be < 0.2
-        self.eps = 0.25 
-        self.min_samples = 3 # Lowered slightly to capture smaller emerging trends, user asked for >5 for trigger but detection can be lower
+        # Cosine distance ranges from 0 to 2. Gemini embeddings are often densely packed.
+        self.eps = 0.10 # lowered from 0.25 to prevent mega-clusters
+        self.min_samples = 2 # Minimum articles to form a cluster
         
     def vectorize_texts(self, texts):
         """
@@ -43,10 +44,11 @@ class TrendDetector:
             logger.error(f"Error generating embeddings: {e}")
             return []
 
-    def detect_clusters(self, articles):
+    def detect_clusters(self, articles, algorithm="dbscan"):
         """
         Takes a list of articles, vectorizes headlines, and clusters them.
         Returns a list of clusters (each cluster is a list of articles).
+        Supported algorithms: "dbscan", "hdbscan", "kmeans"
         """
         if not articles:
             return []
@@ -62,24 +64,63 @@ class TrendDetector:
             
         X = np.array(vectors)
         
-        # Compute DBSCAN
-        # metric='cosine' expects distance, so eps is cosine distance threshold
-        db = DBSCAN(eps=self.eps, min_samples=self.min_samples, metric='cosine').fit(X)
-        labels = db.labels_
+        # Compute Clustering based on selected algorithm
+        algorithm = algorithm.lower().strip()
+        
+        if algorithm == "hdbscan":
+            # HDBSCAN clusters dynamically. It doesn't strictly need eps.
+            # Normalizing X to L2 makes euclidean distance equivalent to cosine distance.
+            X_norm = normalize(X)
+            model = HDBSCAN(min_cluster_size=max(2, self.min_samples))
+            model.fit(X_norm)
+            labels = model.labels_
+            
+        elif algorithm == "kmeans":
+            # KMeans requires knowing K. We guess ~10 articles per trend on average
+            k = max(2, min(len(X) // 5, 20))
+            # KMeans uses euclidean distance, so we L2 normalize the vectors first
+            # to make it behave similarly to spherical k-means / cosine similarity
+            X_norm = normalize(X)
+            model = KMeans(n_clusters=k, random_state=42, n_init="auto")
+            model.fit(X_norm)
+            labels = model.labels_
+            
+        else: # Default to dbscan
+            model = DBSCAN(eps=self.eps, min_samples=self.min_samples, metric='cosine')
+            model.fit(X)
+            labels = model.labels_
+        
+        # Compute 2D coordinates for cluster map
+        try:
+            from sklearn.decomposition import PCA
+            if len(X) >= 2:
+                pca = PCA(n_components=2)
+                coords = pca.fit_transform(X)
+            else:
+                coords = [[0.0, 0.0] for _ in range(len(X))]
+        except Exception as e:
+            logger.error(f"PCA failed: {e}")
+            coords = [[0.0, 0.0] for _ in range(len(X))]
         
         clusters_map = {}
-        for idx, label in enumerate(labels):
+        for index, label in enumerate(labels):
+            # Attach cluster and coords to article for UI map
+            articles[index]['cluster'] = int(label)
+            articles[index]['x'] = float(coords[index][0])
+            articles[index]['y'] = float(coords[index][1])
+
             if label == -1:
                 continue # Noise
             
             if label not in clusters_map:
                 clusters_map[label] = []
-            clusters_map[label].append(articles[idx])
+            clusters_map[label].append(articles[index])
             
-        # Filter for user requirement: >5 vectors (or maybe >=5)
-        # The user said ">5 vectors cluster tightly". 
-        # I'll stick to returning all valid clusters for now, key filtering can happen in orchestrator.
-        return list(clusters_map.values())
+        # Return both clusters and the annotated articles list
+        return {
+            "clusters": list(clusters_map.values()),
+            "articles_with_coords": articles
+        }
 
 if __name__ == "__main__":
     # Mock test
@@ -98,7 +139,8 @@ if __name__ == "__main__":
     
     # Note: This will fail without API key
     if detector.api_key:
-        clusters = detector.detect_clusters(mock_articles)
+        result = detector.detect_clusters(mock_articles, algorithm="dbscan")
+        clusters = result.get('clusters', [])
         for i, cluster in enumerate(clusters):
             print(f"Cluster {i}: {len(cluster)} articles")
             for art in cluster:

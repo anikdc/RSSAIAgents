@@ -47,7 +47,7 @@ class Orchestrator:
             logger.error(f"Could not load feeds.json: {e}")
             return []
 
-    def run_pipeline(self, algorithm="dbscan", skip_fetch=False):
+    def run_pipeline(self, algorithm="hdbscan", skip_fetch=False):
         logger.info(f"Starting pipeline run with algorithm: {algorithm}...")
         
         if not skip_fetch:
@@ -117,8 +117,16 @@ class Orchestrator:
             urls = []
             seen_links = set()
             articles_to_scrape = []
+            
+            # Sort articles in cluster by credibility_score descending before picking
+            # We want the most credible articles to be sent to the Synthesizer
+            cluster_sorted = sorted(
+                cluster, 
+                key=lambda x: x.get("verification_detail", {}).get("credibility_score", 0), 
+                reverse=True
+            )
 
-            for article in cluster:
+            for article in cluster_sorted:
 
                 link = article.get("link")
 
@@ -157,6 +165,11 @@ class Orchestrator:
                 "sources": cluster,
                 "trend_size": len(cluster)
             })
+
+            # Uncomment the line below if you face Groq API rate limits (HTTP 429).
+            # This forces the loop to wait 1 minute before processing the next trend,
+            # which allows the Tokens Per Minute (TPM) limit to reset.
+            # import time; time.sleep(60)
 
 
         # ------------------------------

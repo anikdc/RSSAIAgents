@@ -95,7 +95,7 @@ else:
         algorithm_choice = st.selectbox(
             "Clustering Algorithm",
             ("DBSCAN", "HDBSCAN", "KMeans"),
-            index=0,
+            index=1,
             help="Select the algorithm to use for clustering the news trends."
         )
         
@@ -113,16 +113,20 @@ else:
                     st.error(f"Error running pipeline: {e}")
 
         st.subheader("Trend Cluster Map")
+        show_noise = st.checkbox("Show noisy articles", value=False, help="Visualize unclustered articles (-1) in a distinct color.")
         raw_feed = data.get('all_articles', [])
         if raw_feed:
             plot_data = []
             for art in raw_feed:
                 trend_num = art.get('ui_trend_num', -1)
-                if trend_num == -1:
-                    continue # Filter out noise and minor clusters not in top 4
                 
-                # Ensure it's rendered as 1-indexed string categories to match summary
-                cluster_label = f"Trend {trend_num}"
+                if trend_num == -1:
+                    if not show_noise:
+                        continue # Filter out noise unless requested
+                    cluster_label = "Noise"
+                else:
+                    cluster_label = f"Trend {trend_num}"
+                
                 plot_data.append({
                     "x": art.get('x', 0.0),
                     "y": art.get('y', 0.0),

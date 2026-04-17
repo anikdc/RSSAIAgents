@@ -3,17 +3,40 @@ import google.generativeai as genai
 import logging
 from dotenv import load_dotenv
 
+try:
+    import groq
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+
 load_dotenv()
 logger = logging.getLogger(__name__)
 
 class SynthesisAgent:
-    def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY not found. Synthesis will fail.")
-        else:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-3.1-flash-lite-preview') 
+    def __init__(self):
+        self.provider = os.getenv("LLM_PROVIDER", "gemini").lower()
+        
+        if self.provider == "groq":
+            self.api_key = os.getenv("GROQ_API_KEY")
+            if not self.api_key:
+                logger.warning("GROQ_API_KEY not found. Synthesis will fail.")
+            
+            if GROQ_AVAILABLE:
+                self.client = Groq(api_key=self.api_key)
+                self.groq_model = os.getenv("GROQ_MODEL", "qwen-2.5-32b")
+            else:
+                logger.error("groq package not installed but LLM_PROVIDER is groq. Run `pip install groq`.")
+                
+        else: # Default to gemini
+            self.api_key = os.getenv("GEMINI_API_KEY")
+            if not self.api_key:
+                logger.warning("GEMINI_API_KEY not found. Synthesis will fail.")
+            else:
+                genai.configure(api_key=self.api_key)
+                # Pull the target Gemini model from env
+                gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
+                self.model = genai.GenerativeModel(gemini_model)
 
     def synthesize_briefing(self, articles_content, sources_meta=None):
         """
@@ -59,10 +82,21 @@ class SynthesisAgent:
             )
 
         prompt = f"{system_prompt}\n\n### SOURCES TO SYNTHESIZE:\n\n{context}"
-
+        
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            if self.provider == "groq":
+                response = self.client.chat.completions.create(
+                    model=self.groq_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"### SOURCES TO SYNTHESIZE:\n\n{context}"}
+                    ]
+                )
+                return response.choices[0].message.content
+            else:
+                response = self.model.generate_content(prompt)
+                return response.text
+                
         except Exception as e:
             logger.error(f"Error during synthesis: {e}")
             return "Error generating briefing."

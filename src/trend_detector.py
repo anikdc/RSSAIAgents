@@ -33,9 +33,10 @@ class TrendDetector:
             return []
         
         try:
-            # text-embedding-004 is a good model choice
+            # Pull embedding model from .env fallback to gemini-embedding-001
+            embedding_model = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
             result = genai.embed_content(
-                model="gemini-embedding-001",
+                model=embedding_model,
                 content=texts,
                 task_type="clustering",
             )

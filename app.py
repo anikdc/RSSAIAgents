@@ -57,7 +57,7 @@ else:
                 
                 # Main Briefing Card
                 with st.container(border=True):
-                    st.markdown(trend['briefing'])
+                    st.markdown(trend['briefing'].replace('$', '\\$'))
                     
                 st.markdown(f"**Synthesized from {trend.get('trend_size', '?')} sources**")
                 
@@ -90,14 +90,46 @@ else:
             st.rerun()
 
     with side_col:
-        st.subheader("Controls")
+        st.subheader("Smart Search")
+        search_query = st.text_input("Search for news...", placeholder="e.g. 'news about technology', 'iran news'")
         
+        # We need the algorithm choice early for the search pipeline
         algorithm_choice = st.selectbox(
             "Clustering Algorithm",
             ("DBSCAN", "HDBSCAN", "KMeans"),
             index=1,
             help="Select the algorithm to use for clustering the news trends."
         )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Search & Run", use_container_width=True):
+                if search_query:
+                    with st.spinner("Finding feeds and running pipeline..."):
+                        try:
+                            orchestrator = Orchestrator()
+                            orchestrator.run_search_pipeline(search_query, algorithm=algorithm_choice.lower())
+                            st.success("Search complete!")
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Search error: {e}")
+                else:
+                    st.warning("Please enter a query.")
+                    
+        with col2:
+            if os.path.exists('active_feeds.json'):
+                if st.button("Reset Feeds", help="Return to default feeds", use_container_width=True):
+                    try:
+                        os.remove('active_feeds.json')
+                        st.success("Reset to defaults.")
+                        time.sleep(1)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error resetting: {e}")
+
+        st.divider()
+        st.subheader("Controls")
         
         force_fetch = st.checkbox("Fetch and verify new articles", value=False, help="Uncheck to quickly re-cluster existing articles without re-verifying.")
 

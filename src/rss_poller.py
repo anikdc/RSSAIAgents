@@ -25,7 +25,10 @@ class RSSPoller:
             try:
                 feed = feedparser.parse(feed_url)
                 if feed.bozo:
-                    logger.warning(f"Error parsing feed {feed_url}: {feed.bozo_exception}")
+                    logger.warning(f"Feed {feed_url} has parsing warnings (bozo): {feed.bozo_exception}")
+                    
+                if not getattr(feed, 'entries', []):
+                    logger.warning(f"No entries could be parsed from feed {feed_url}")
                     continue
                 
                 source_title = feed.feed.get('title', feed_url)

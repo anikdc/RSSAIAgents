@@ -1,4 +1,5 @@
 import time
+import re
 import json
 import logging
 import sys
@@ -42,20 +43,17 @@ class Orchestrator:
 
 
     def load_feeds(self):
+        """Load the default general-news feeds from feeds_default.json."""
         try:
-            if os.path.exists('active_feeds.json'):
-                with open('active_feeds.json', 'r') as f:
-                    feeds = json.load(f)
-                    if feeds:
-                        return feeds
-            
-            with open('feeds.json', 'r') as f:
+            with open('feeds_default.json', 'r') as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Could not load feeds: {e}")
             return []
 
     def run_search_pipeline(self, user_query, algorithm="hdbscan"):
+        """Run a search-specific pipeline. Feeds are determined by the search agent
+        and passed directly into the pipeline — they do NOT override the default feeds."""
         logger.info(f"Running search pipeline for query: '{user_query}'")
         search_result = self.search_agent.search(user_query)
         
@@ -67,23 +65,23 @@ class Orchestrator:
         if not feeds:
             logger.warning("Search returned no feeds. Aborting search pipeline.")
             return
-            
-        # Write to active_feeds.json non-destructively
+
+        # Save for UI reference (which feeds the search used) — not read by default pipeline
         try:
             with open('active_feeds.json', 'w') as f:
                 json.dump(feeds, f, indent=2)
-            logger.info(f"Saved {len(feeds)} feeds to active_feeds.json")
+            logger.info(f"Saved {len(feeds)} search feeds to active_feeds.json")
         except Exception as e:
             logger.error(f"Failed to save active_feeds.json: {e}")
             
-        # Run standard pipeline with the new time window and search intent
-        self.run_pipeline(algorithm=algorithm, skip_fetch=False, time_window_hours=time_window, search_intent=parsed_intent)
+        # Pass search feeds directly — the default pipeline will never see them
+        self.run_pipeline(algorithm=algorithm, skip_fetch=False, time_window_hours=time_window, search_intent=parsed_intent, feeds_override=feeds, search_query=user_query)
 
-    def run_pipeline(self, algorithm="hdbscan", skip_fetch=False, time_window_hours=24.0, search_intent=None):
+    def run_pipeline(self, algorithm="hdbscan", skip_fetch=False, time_window_hours=24.0, search_intent=None, feeds_override=None, search_query=None):
         logger.info(f"Starting pipeline run with algorithm: {algorithm}...")
         
         if not skip_fetch:
-            feeds = self.load_feeds()
+            feeds = feeds_override if feeds_override else self.load_feeds()
 
             # ------------------------------
             # 1️⃣ RSS POLLING
@@ -105,10 +103,12 @@ class Orchestrator:
                     filtered_articles = []
                     for art in articles:
                         content = (art.get('title', '') + ' ' + art.get('summary', '')).lower()
-                        # If any keyword is in the content, keep the article
-                        if any(kw.lower() in content for kw in keywords):
+                        # Require at least 2 distinct keyword matches to ensure
+                        # articles are truly about the query, not just tangentially related
+                        match_count = sum(1 for kw in keywords if re.search(r'\b' + re.escape(kw.lower()) + r'\b', content))
+                        if match_count >= 2:
                             filtered_articles.append(art)
-                    logger.info(f"Filtered from {len(articles)} to {len(filtered_articles)} articles using keywords: {keywords}")
+                    logger.info(f"Filtered from {len(articles)} to {len(filtered_articles)} articles (requiring 2+ keyword matches from: {keywords})")
                     articles = filtered_articles
 
             if not articles:
@@ -137,7 +137,7 @@ class Orchestrator:
 
         # Detect Trends
         logger.info(f"Analyzing {len(articles)} articles for trends using {algorithm}...")
-        clusters_res = self.detector.detect_clusters(articles, algorithm=algorithm)
+        clusters_res = self.detector.detect_clusters(articles, algorithm=algorithm, search_query=search_query)
         clusters = clusters_res.get('clusters', [])
         all_articles = clusters_res.get('articles_with_coords', articles)
         
@@ -222,7 +222,7 @@ class Orchestrator:
             # Uncomment the line below if you face Groq API rate limits (HTTP 429).
             # This forces the loop to wait 1 minute before processing the next trend,
             # which allows the Tokens Per Minute (TPM) limit to reset.
-            # import time; time.sleep(60)
+            import time; time.sleep(5)
 
 
         # ------------------------------

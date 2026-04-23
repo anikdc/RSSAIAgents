@@ -4,5 +4,6 @@ __pycache__/
 .env
 agent.log
 briefing_data.json
+active_feeds.json
 .DS_Store
 evaluate_clustering.py

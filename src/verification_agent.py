@@ -10,20 +10,20 @@ logger = logging.getLogger(__name__)
 
 class VerificationAgent:
 
-    def __init__(self, feeds_path="feeds.json"):
+    def __init__(self, feeds_path="feeds_default.json"):
         # Lightweight semantic model for cross-source corroboration
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
 
-        # Load trusted domains from feeds.json
+        # Load trusted domains from feeds_default.json
         self.trusted_domains = self._load_trusted_domains(feeds_path)
 
 
     # -----------------------------------------
-    # Load trusted domains from feeds.json
+    # Load trusted domains from feeds_default.json
     # -----------------------------------------
     def _load_trusted_domains(self, feeds_path):
         """
-        Extract base domains from feeds.json URLs.
+        Extract base domains from feeds_default.json URLs.
         These are considered editorially trusted sources.
         """
         trusted = set()
@@ -35,7 +35,7 @@ class VerificationAgent:
                 if domain:
                     trusted.add(domain)
         except Exception as e:
-            logger.warning(f"Could not load feeds.json for trusted domains: {e}")
+            logger.warning(f"Could not load feeds_default.json for trusted domains: {e}")
         
         logger.info(f"Loaded {len(trusted)} trusted domains: {trusted}")
         return trusted
@@ -170,7 +170,7 @@ class VerificationAgent:
         Score each article on a 0-100 credibility scale.
 
         Scoring breakdown:
-          - Trusted Source:            0 - 35 pts  (domain is in feeds.json)
+          - Trusted Source:            0 - 35 pts  (domain is in feeds_default.json)
           - Cross-Source Corroboration: 0 - 40 pts  (unique domains reporting same story)
           - Content Completeness:      0 - 15 pts  (headline, summary, date present)
           - Recency:                   0 - 10 pts  (how fresh the article is)

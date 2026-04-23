@@ -47,7 +47,7 @@ python src/orchestrator.py
 
 ### Root Directory
 - app.py: The Streamlit web application. It displays the briefing and provides controls to trigger the agent.
-- feeds.json: A JSON list of RSS feed URLs to poll. You can edit this file to add or remove sources.
+- feeds_default.json: A JSON list of RSS feed URLs to poll. You can edit this file to add or remove sources.
 - requirements.txt: List of Python dependencies.
 - .env: Configuration file for API keys (not committed to git).
 

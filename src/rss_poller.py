@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # Test run
     import json
     logging.basicConfig(level=logging.INFO)
-    with open('feeds.json', 'r') as f:
+    with open('feeds_default.json', 'r') as f:
         feeds = json.load(f)
     
     poller = RSSPoller()

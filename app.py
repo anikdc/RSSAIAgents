@@ -31,11 +31,24 @@ st.title("AI News Briefing")
 data = load_data()
 
 if not data:
-    st.info("Waiting for the Agent to generate the first briefing...")
-    st.text("Make sure 'src/orchestrator.py' is running.")
-    
-    if st.button("Refresh"):
-        st.rerun()
+    st.info("No briefing data yet. Generate your first briefing below.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        init_algo = st.selectbox("Algorithm", ("HDBSCAN", "DBSCAN", "KMeans"), key="init_algo")
+    with col2:
+        init_fetch = st.checkbox("Fetch fresh articles", value=True, key="init_fetch")
+
+    if st.button("Generate Briefing", type="primary", use_container_width=True):
+        with st.spinner("Running the full pipeline — this may take a minute…"):
+            try:
+                orchestrator = Orchestrator()
+                orchestrator.run_pipeline(algorithm=init_algo.lower(), skip_fetch=not init_fetch)
+                st.success("Briefing generated!")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Pipeline error: {e}")
 else:
     # Header
     last_update = datetime.fromisoformat(data['timestamp'])
@@ -101,48 +114,36 @@ else:
             help="Select the algorithm to use for clustering the news trends."
         )
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Search & Run", use_container_width=True):
-                if search_query:
-                    with st.spinner("Finding feeds and running pipeline..."):
-                        try:
-                            orchestrator = Orchestrator()
-                            orchestrator.run_search_pipeline(search_query, algorithm=algorithm_choice.lower())
-                            st.success("Search complete!")
-                            time.sleep(1)
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Search error: {e}")
-                else:
-                    st.warning("Please enter a query.")
-                    
-        with col2:
-            if os.path.exists('active_feeds.json'):
-                if st.button("Reset Feeds", help="Return to default feeds", use_container_width=True):
+        if st.button("Search & Run", use_container_width=True):
+            if search_query:
+                with st.spinner("Finding feeds and running pipeline..."):
                     try:
-                        os.remove('active_feeds.json')
-                        st.success("Reset to defaults.")
+                        orchestrator = Orchestrator()
+                        orchestrator.run_search_pipeline(search_query, algorithm=algorithm_choice.lower())
+                        st.success("Search complete!")
                         time.sleep(1)
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Error resetting: {e}")
+                        st.error(f"Search error: {e}")
+            else:
+                st.warning("Please enter a query.")
 
         st.divider()
-        st.subheader("Controls")
+        st.subheader("Generate Briefing")
+        st.caption("Fetches news from your default feeds, clusters trends, and generates a fresh briefing.")
         
-        force_fetch = st.checkbox("Fetch and verify new articles", value=False, help="Uncheck to quickly re-cluster existing articles without re-verifying.")
+        force_fetch = st.checkbox("Fetch fresh articles", value=True, help="Uncheck to quickly re-cluster existing articles without re-fetching and re-verifying.")
 
-        if st.button("Trigger Agent Run"):
-            with st.spinner(f"Running agent pipeline with {algorithm_choice}..."):
+        if st.button("Generate Briefing", type="primary", use_container_width=True):
+            with st.spinner(f"Running pipeline with {algorithm_choice}..."):
                 try:
                     orchestrator = Orchestrator()
                     orchestrator.run_pipeline(algorithm=algorithm_choice.lower(), skip_fetch=not force_fetch)
-                    st.success("Pipeline finished! Refreshing view...")
+                    st.success("Briefing generated! Refreshing...")
                     time.sleep(1)
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Error running pipeline: {e}")
+                    st.error(f"Error: {e}")
 
         st.subheader("Trend Cluster Map")
         show_noise = st.checkbox("Show noisy articles", value=False, help="Visualize unclustered articles (-1) in a distinct color.")

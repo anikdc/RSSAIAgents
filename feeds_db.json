@@ -228,6 +228,54 @@
         "region": "india"
     },
     {
+        "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+        "name": "NDTV Top Stories",
+        "categories": ["world", "politics", "elections", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://feeds.feedburner.com/ndtvnews-india-news",
+        "name": "NDTV India",
+        "categories": ["politics", "elections", "government", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://www.thehindu.com/news/national/feeder/default.rss",
+        "name": "The Hindu National",
+        "categories": ["politics", "elections", "government", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://indianexpress.com/section/political-pulse/feed/",
+        "name": "Indian Express Political Pulse",
+        "categories": ["politics", "elections", "government", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
+        "name": "Hindustan Times India",
+        "categories": ["politics", "elections", "world", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://www.livemint.com/rss/politics",
+        "name": "LiveMint Politics",
+        "categories": ["politics", "elections", "government", "india"],
+        "region": "india"
+    },
+    {
+        "url": "https://thewire.in/feed",
+        "name": "The Wire",
+        "categories": ["politics", "elections", "india", "world"],
+        "region": "india"
+    },
+    {
+        "url": "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
+        "name": "Economic Times Top Stories",
+        "categories": ["business", "economy", "politics", "india"],
+        "region": "india"
+    },
+    {
         "url": "https://www.economist.com/science-and-technology/rss.xml",
         "name": "The Economist Science & Tech",
         "categories": ["science", "technology"],

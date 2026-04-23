@@ -45,11 +45,15 @@ class TrendDetector:
             logger.error(f"Error generating embeddings: {e}")
             return []
 
-    def detect_clusters(self, articles, algorithm="dbscan"):
+    def detect_clusters(self, articles, algorithm="dbscan", search_query=None):
         """
         Takes a list of articles, vectorizes headlines, and clusters them.
         Returns a list of clusters (each cluster is a list of articles).
         Supported algorithms: "dbscan", "hdbscan", "kmeans"
+        
+        If search_query is provided, articles are filtered by semantic similarity
+        to the query before clustering (zero extra API cost — query is embedded
+        in the same batch as the headlines).
         """
         if not articles:
             return []
@@ -58,10 +62,35 @@ class TrendDetector:
         for art in articles:
             summary = art.get('summary', '')[:100]
             headlines.append(f"{art['title']} {summary}")
+        
+        # If search mode, append query to the same batch (free embedding)
+        if search_query:
+            headlines.append(search_query)
+        
         vectors = self.vectorize_texts(headlines)
         
         if not vectors:
             return []
+        
+        # Pop the query vector back out and filter by cosine similarity
+        if search_query and vectors:
+            query_vec = np.array(vectors.pop())  # last vector is the query
+            
+            from sklearn.metrics.pairwise import cosine_similarity
+            article_arr = np.array(vectors)
+            sims = cosine_similarity(query_vec.reshape(1, -1), article_arr)[0]
+            
+            threshold = 0.55
+            kept_indices = [i for i, s in enumerate(sims) if s >= threshold]
+            dropped = len(articles) - len(kept_indices)
+            logger.info(f"Semantic filter: {len(articles)} → {len(kept_indices)} articles (dropped {dropped}, threshold={threshold})")
+            
+            articles = [articles[i] for i in kept_indices]
+            vectors = [vectors[i] for i in kept_indices]
+            
+            if not articles:
+                logger.warning("All articles filtered out by semantic relevance. Returning empty.")
+                return {"clusters": [], "articles_with_coords": []}
             
         X = np.array(vectors)
         

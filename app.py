@@ -8,7 +8,11 @@ import feedparser
 
 # Allow importing from src
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from src.secrets_helper import load_secrets
 from src.orchestrator import Orchestrator
+
+# Load API keys from .env (local) and/or st.secrets (cloud)
+load_secrets()
 
 st.set_page_config(
     page_title="AI News Briefing",

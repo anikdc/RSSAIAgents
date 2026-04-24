@@ -2,6 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .env
+.streamlit/secrets.toml
 agent.log
 briefing_data.json
 active_feeds.json

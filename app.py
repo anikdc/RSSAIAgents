@@ -4,6 +4,7 @@ import os
 import time
 from datetime import datetime
 import sys
+import feedparser
 
 # Allow importing from src
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -16,6 +17,10 @@ st.set_page_config(
 )
 
 DATA_FILE = "briefing_data.json"
+FEEDS_DB_FILE = "feeds_db.json"
+TRUSTED_FEEDS_FILE = "feeds_default.json"
+
+REGION_OPTIONS = ["global", "us", "uk", "europe", "india", "middle-east", "other"]
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -25,6 +30,113 @@ def load_data():
             return json.load(f)
     except:
         return None
+
+# ── Feed Management Helpers ──────────────────────────────────────────
+
+def load_feeds_db():
+    """Load the master feed database."""
+    if not os.path.exists(FEEDS_DB_FILE):
+        return []
+    try:
+        with open(FEEDS_DB_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_feeds_db(data):
+    """Write the master feed database."""
+    with open(FEEDS_DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+def load_trusted_feeds():
+    """Load the trusted/default feed URL list."""
+    if not os.path.exists(TRUSTED_FEEDS_FILE):
+        return []
+    try:
+        with open(TRUSTED_FEEDS_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_trusted_feeds(data):
+    """Write the trusted/default feed URL list."""
+    with open(TRUSTED_FEEDS_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+def validate_feed_url(url):
+    """Attempt to parse an RSS/Atom feed. Returns (ok, message)."""
+    try:
+        feed = feedparser.parse(url)
+        if feed.bozo and not getattr(feed, 'entries', []):
+            return False, f"Could not parse feed: {feed.bozo_exception}"
+        if not getattr(feed, 'entries', []):
+            return False, "Feed parsed but contains zero entries."
+        return True, f"Valid feed — {len(feed.entries)} entries found."
+    except Exception as e:
+        return False, f"Validation error: {e}"
+
+def add_feed(url, name, categories_str, region, trusted):
+    """
+    Validate and add a feed to the database (and optionally to trusted feeds).
+    Returns (success: bool, message: str).
+    """
+    url = url.strip()
+    name = name.strip()
+    if not url:
+        return False, "Feed URL is required."
+    if not name:
+        return False, "Feed name is required."
+
+    # Check for duplicates in DB
+    db = load_feeds_db()
+    existing_urls = {f["url"] for f in db}
+    if url in existing_urls:
+        return False, "This feed URL already exists in the database."
+
+    # Validate the feed
+    ok, msg = validate_feed_url(url)
+    if not ok:
+        return False, f"Invalid feed — {msg}"
+
+    # Parse categories
+    categories = [c.strip().lower() for c in categories_str.split(",") if c.strip()]
+
+    # Add to DB
+    db.append({
+        "url": url,
+        "name": name,
+        "categories": categories,
+        "region": region
+    })
+    save_feeds_db(db)
+
+    # Optionally add to trusted feeds
+    if trusted:
+        trusted_list = load_trusted_feeds()
+        if url not in trusted_list:
+            trusted_list.append(url)
+            save_trusted_feeds(trusted_list)
+
+    return True, msg
+
+def remove_feed_from_db(url):
+    """Remove a feed from the DB (and from trusted if present)."""
+    db = load_feeds_db()
+    db = [f for f in db if f["url"] != url]
+    save_feeds_db(db)
+    # Also clean up trusted list
+    trusted = load_trusted_feeds()
+    if url in trusted:
+        trusted.remove(url)
+        save_trusted_feeds(trusted)
+
+def remove_feed_from_trusted(url):
+    """Remove a feed only from the trusted list (keep it in DB)."""
+    trusted = load_trusted_feeds()
+    if url in trusted:
+        trusted.remove(url)
+        save_trusted_feeds(trusted)
+
 
 st.title("AI News Briefing")
 
@@ -180,3 +292,63 @@ else:
                 st.markdown(f"**[{art.get('title', 'Untitled')}]({art.get('link', '#')})**")
                 st.caption(f"{art.get('source', 'Unknown')} • {art.get('published', '')[:16]}")
 
+        # ── Feed Manager ─────────────────────────────────────────
+        st.divider()
+        st.subheader("Feed Manager")
+
+        # ── Add New Feed ──
+        with st.expander("➕ Add New Feed"):
+            new_url = st.text_input("Feed URL", placeholder="https://example.com/rss/feed.xml", key="new_feed_url")
+            new_name = st.text_input("Feed Name", placeholder="e.g. TechCrunch AI", key="new_feed_name")
+            new_cats = st.text_input("Categories", placeholder="technology, ai, startups", key="new_feed_cats",
+                                     help="Comma-separated tags used by Smart Search to match this feed to queries.")
+            new_region = st.selectbox("Region", REGION_OPTIONS, key="new_feed_region")
+            new_trusted = st.checkbox("Add to trusted (default) feeds", value=False, key="new_feed_trusted",
+                                      help="Trusted feeds are polled automatically during every general briefing.")
+
+            if st.button("Add Feed", use_container_width=True, key="btn_add_feed"):
+                with st.spinner("Validating feed…"):
+                    ok, msg = add_feed(new_url, new_name, new_cats, new_region, new_trusted)
+                if ok:
+                    st.success(f"✅ Feed added! {msg}")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(f"❌ {msg}")
+
+        # ── Manage Existing Feeds ──
+        with st.expander("Manage Feeds"):
+            tab_trusted, tab_db = st.tabs(["Trusted Feeds", "Database"])
+
+            with tab_trusted:
+                trusted_feeds = load_trusted_feeds()
+                if not trusted_feeds:
+                    st.info("No trusted feeds configured.")
+                else:
+                    for idx, url in enumerate(trusted_feeds):
+                        col_url, col_btn = st.columns([4, 1])
+                        with col_url:
+                            st.caption(url)
+                        with col_btn:
+                            if st.button("❌", key=f"rm_trusted_{idx}", help="Remove from trusted feeds"):
+                                remove_feed_from_trusted(url)
+                                st.rerun()
+
+            with tab_db:
+                db_feeds = load_feeds_db()
+                trusted_set = set(load_trusted_feeds())
+                if not db_feeds:
+                    st.info("Feed database is empty.")
+                else:
+                    for idx, feed in enumerate(db_feeds):
+                        col_info, col_btn = st.columns([4, 1])
+                        is_trusted = feed["url"] in trusted_set
+                        with col_info:
+                            label = f"{'⭐ ' if is_trusted else ''}{feed.get('name', 'Unnamed')}"
+                            cats = ", ".join(feed.get("categories", []))
+                            st.markdown(f"**{label}**")
+                            st.caption(f"{feed['url']}  \n_{feed.get('region', 'global')} · {cats}_")
+                        with col_btn:
+                            if st.button("❌", key=f"rm_db_{idx}", help="Remove from database"):
+                                remove_feed_from_db(feed["url"])
+                                st.rerun()

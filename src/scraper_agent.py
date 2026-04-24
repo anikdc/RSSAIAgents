@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
@@ -11,24 +12,32 @@ class ScraperAgent:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
 
+    def _scrape_single(self, url):
+        """Scrape a single URL. Returns (url, text) or (url, None) on failure."""
+        try:
+            logger.info(f"Scraping {url}...")
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                return url, self._extract_content(response.text)
+            else:
+                logger.warning(f"Failed to fetch {url}: Status {response.status_code}")
+                return url, None
+        except Exception as e:
+            logger.error(f"Error scraping {url}: {e}")
+            return url, None
+
     def scrape_urls(self, urls):
         """
-        Visits a list of URLs and scrapes their content.
+        Visits a list of URLs in parallel and scrapes their content.
         Returns a map of URL -> Cleaned Text.
         """
         results = {}
-        for url in urls:
-            try:
-                logger.info(f"Scraping {url}...")
-                response = requests.get(url, headers=self.headers, timeout=10)
-                if response.status_code == 200:
-                    text = self._extract_content(response.text)
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = [executor.submit(self._scrape_single, url) for url in urls]
+            for future in as_completed(futures):
+                url, text = future.result()
+                if text:
                     results[url] = text
-                else:
-                    logger.warning(f"Failed to fetch {url}: Status {response.status_code}")
-            except Exception as e:
-                logger.error(f"Error scraping {url}: {e}")
-                
         return results
 
     def _extract_content(self, html):

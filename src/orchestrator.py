@@ -156,9 +156,14 @@ class Orchestrator:
 
 
         # ------------------------------
-        # 5️⃣ SCRAPING + SYNTHESIS
+        # 5️⃣ SCRAPING + SYNTHESIS (parallelized)
         # ------------------------------
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        # --- Phase A: Prepare all cluster metadata (fast, no I/O) ---
+        cluster_prep = []
         for i, cluster in enumerate(target_clusters):
+            trend_num = i + 1
 
             if len(cluster) >= 5:
                 trend_type = "Trending Narrative"
@@ -167,22 +172,18 @@ class Orchestrator:
             else:
                 trend_type = "Latest News Snapshot"
 
-            urls = []
-            seen_links = set()
-            articles_to_scrape = []
-            
-            # Sort articles in cluster by credibility_score descending before picking
-            # We want the most credible articles to be sent to the Synthesizer
+            # Sort articles in cluster by credibility_score descending
             cluster_sorted = sorted(
                 cluster, 
                 key=lambda x: x.get("verification_detail", {}).get("credibility_score", 0), 
                 reverse=True
             )
 
+            urls = []
+            seen_links = set()
+            articles_to_scrape = []
             for article in cluster_sorted:
-
                 link = article.get("link")
-
                 if link and link not in seen_links:
                     urls.append(link)
                     seen_links.add(link)
@@ -191,10 +192,36 @@ class Orchestrator:
             urls = urls[:3]
             articles_to_scrape = articles_to_scrape[:3]
 
-            scrape_results = self.scraper.scrape_urls(urls)
-            
-            # Fallback to summary if scraping fails
-            for article in articles_to_scrape:
+            # Tag articles with trend number for UI
+            for article in cluster:
+                article["ui_trend_num"] = trend_num
+
+            cluster_prep.append({
+                "trend_num": trend_num,
+                "trend_type": trend_type,
+                "cluster": cluster,
+                "urls": urls,
+                "articles_to_scrape": articles_to_scrape,
+            })
+
+        # --- Phase B: Scrape all clusters' URLs in parallel ---
+        all_urls = []
+        for cp in cluster_prep:
+            all_urls.extend(cp["urls"])
+        
+        logger.info(f"Scraping {len(all_urls)} URLs across {len(cluster_prep)} clusters in parallel...")
+        all_scrape_results = self.scraper.scrape_urls(all_urls)
+
+        # --- Phase C: Build per-cluster scrape context + run synthesis in parallel ---
+        def _synthesize_cluster(cp):
+            """Prepare scrape context for one cluster and call the synthesizer."""
+            scrape_results = {}
+            for url in cp["urls"]:
+                if url in all_scrape_results:
+                    scrape_results[url] = all_scrape_results[url]
+
+            # Fallback to summary if scraping failed
+            for article in cp["articles_to_scrape"]:
                 link = article.get("link")
                 if link not in scrape_results or not scrape_results[link].strip():
                     summary = article.get("summary", "")
@@ -202,27 +229,35 @@ class Orchestrator:
                     if summary or title:
                         scrape_results[link] = f"TITLE: {title}\nSUMMARY: {summary}"
 
-            trend_num = i + 1
-
-            for article in cluster:
-                article["ui_trend_num"] = trend_num
-
-            logger.info(f"Synthesizing briefing for trend {trend_num}")
-
-            briefing_text = self.synthesizer.synthesize_briefing(scrape_results, sources_meta=articles_to_scrape)
-
-            trends_output.append({
-                "trend_id": trend_num,
-                "briefing_type": trend_type,
+            logger.info(f"Synthesizing briefing for trend {cp['trend_num']}")
+            briefing_text = self.synthesizer.synthesize_briefing(
+                scrape_results, sources_meta=cp["articles_to_scrape"]
+            )
+            return {
+                "trend_id": cp["trend_num"],
+                "briefing_type": cp["trend_type"],
                 "briefing": briefing_text,
-                "sources": cluster,
-                "trend_size": len(cluster)
-            })
+                "sources": cp["cluster"],
+                "trend_size": len(cp["cluster"])
+            }
 
-            # Uncomment the line below if you face Groq API rate limits (HTTP 429).
-            # This forces the loop to wait 1 minute before processing the next trend,
-            # which allows the Tokens Per Minute (TPM) limit to reset.
-            import time; time.sleep(5)
+        logger.info(f"Synthesizing {len(cluster_prep)} trends in parallel...")
+        trends_output = []
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(_synthesize_cluster, cp): cp["trend_num"]
+                for cp in cluster_prep
+            }
+            for future in as_completed(futures):
+                trend_num = futures[future]
+                try:
+                    result = future.result()
+                    trends_output.append(result)
+                except Exception as e:
+                    logger.error(f"Synthesis failed for trend {trend_num}: {e}")
+
+        # Sort by trend_id to maintain consistent ordering
+        trends_output.sort(key=lambda t: t["trend_id"])
 
 
         # ------------------------------

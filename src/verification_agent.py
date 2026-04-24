@@ -7,12 +7,22 @@ from sentence_transformers import SentenceTransformer, util
 
 logger = logging.getLogger(__name__)
 
+# Module-level cache: load the model once, reuse across all instances
+_SENTENCE_MODEL = None
+
+def _get_sentence_model():
+    global _SENTENCE_MODEL
+    if _SENTENCE_MODEL is None:
+        logger.info("Loading SentenceTransformer model (first time)...")
+        _SENTENCE_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    return _SENTENCE_MODEL
+
 
 class VerificationAgent:
 
     def __init__(self, feeds_path="feeds_default.json"):
-        # Lightweight semantic model for cross-source corroboration
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        # Lightweight semantic model for cross-source corroboration (cached)
+        self.model = _get_sentence_model()
 
         # Load trusted domains from feeds_default.json
         self.trusted_domains = self._load_trusted_domains(feeds_path)

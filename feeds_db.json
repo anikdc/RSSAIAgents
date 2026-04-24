@@ -2,367 +2,636 @@
     {
         "url": "https://feeds.feedburner.com/TechCrunch",
         "name": "TechCrunch",
-        "categories": ["technology", "startups", "ai", "business"],
+        "categories": [
+            "technology",
+            "startups",
+            "ai",
+            "business"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.arstechnica.com/arstechnica/index",
         "name": "Ars Technica",
-        "categories": ["technology", "science", "security"],
+        "categories": [
+            "technology",
+            "science",
+            "security"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.theverge.com/rss/index.xml",
         "name": "The Verge",
-        "categories": ["technology", "entertainment", "culture"],
+        "categories": [
+            "technology",
+            "entertainment",
+            "culture"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.wired.com/feed/rss",
         "name": "Wired",
-        "categories": ["technology", "science", "culture", "security"],
+        "categories": [
+            "technology",
+            "science",
+            "culture",
+            "security"
+        ],
         "region": "global"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
         "name": "NYT Technology",
-        "categories": ["technology", "ai", "business"],
+        "categories": [
+            "technology",
+            "ai",
+            "business"
+        ],
         "region": "us"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
         "name": "NYT World",
-        "categories": ["world", "politics", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict"
+        ],
         "region": "global"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
         "name": "NYT Politics",
-        "categories": ["politics", "government", "elections"],
+        "categories": [
+            "politics",
+            "government",
+            "elections"
+        ],
         "region": "us"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
         "name": "NYT Science",
-        "categories": ["science", "health", "environment", "space"],
+        "categories": [
+            "science",
+            "health",
+            "environment",
+            "space"
+        ],
         "region": "global"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
         "name": "NYT Business",
-        "categories": ["business", "economy", "finance", "markets"],
+        "categories": [
+            "business",
+            "economy",
+            "finance",
+            "markets"
+        ],
         "region": "us"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml",
         "name": "NYT Sports",
-        "categories": ["sports"],
+        "categories": [
+            "sports"
+        ],
         "region": "us"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml",
         "name": "NYT Health",
-        "categories": ["health", "medicine", "science"],
+        "categories": [
+            "health",
+            "medicine",
+            "science"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
         "name": "BBC World",
-        "categories": ["world", "politics", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
         "name": "BBC Technology",
-        "categories": ["technology", "ai", "security"],
+        "categories": [
+            "technology",
+            "ai",
+            "security"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
         "name": "BBC Science & Environment",
-        "categories": ["science", "environment", "space", "climate"],
+        "categories": [
+            "science",
+            "environment",
+            "space",
+            "climate"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/business/rss.xml",
         "name": "BBC Business",
-        "categories": ["business", "economy", "finance", "markets"],
+        "categories": [
+            "business",
+            "economy",
+            "finance",
+            "markets"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/health/rss.xml",
         "name": "BBC Health",
-        "categories": ["health", "medicine"],
+        "categories": [
+            "health",
+            "medicine"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
         "name": "BBC Entertainment",
-        "categories": ["entertainment", "culture", "arts"],
+        "categories": [
+            "entertainment",
+            "culture",
+            "arts"
+        ],
         "region": "global"
     },
     {
         "url": "http://feeds.bbci.co.uk/sport/rss.xml",
         "name": "BBC Sport",
-        "categories": ["sports", "football", "cricket"],
+        "categories": [
+            "sports",
+            "football",
+            "cricket"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.theguardian.com/world/rss",
         "name": "Guardian World",
-        "categories": ["world", "politics", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.theguardian.com/uk/technology/rss",
         "name": "Guardian Technology",
-        "categories": ["technology", "ai"],
+        "categories": [
+            "technology",
+            "ai"
+        ],
         "region": "uk"
     },
     {
         "url": "https://www.theguardian.com/science/rss",
         "name": "Guardian Science",
-        "categories": ["science", "environment", "space"],
+        "categories": [
+            "science",
+            "environment",
+            "space"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.theguardian.com/uk/environment/rss",
         "name": "Guardian Environment",
-        "categories": ["environment", "climate", "energy"],
+        "categories": [
+            "environment",
+            "climate",
+            "energy"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.theguardian.com/uk/sport/rss",
         "name": "Guardian Sport",
-        "categories": ["sports", "football", "cricket", "tennis"],
+        "categories": [
+            "sports",
+            "football",
+            "cricket",
+            "tennis"
+        ],
         "region": "uk"
     },
     {
         "url": "http://feeds.foxnews.com/foxnews/world",
         "name": "Fox News World",
-        "categories": ["world", "politics", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict"
+        ],
         "region": "us"
     },
     {
         "url": "http://feeds.foxnews.com/foxnews/politics",
         "name": "Fox News Politics",
-        "categories": ["politics", "government", "elections"],
+        "categories": [
+            "politics",
+            "government",
+            "elections"
+        ],
         "region": "us"
     },
     {
         "url": "http://feeds.foxnews.com/foxnews/scitech",
         "name": "Fox News Science & Tech",
-        "categories": ["technology", "science"],
+        "categories": [
+            "technology",
+            "science"
+        ],
         "region": "us"
     },
     {
         "url": "https://hnrss.org/best",
         "name": "Hacker News Best",
-        "categories": ["technology", "startups", "programming", "ai"],
+        "categories": [
+            "technology",
+            "startups",
+            "programming",
+            "ai"
+        ],
         "region": "global"
     },
     {
         "url": "https://hnrss.org/newest",
         "name": "Hacker News Newest",
-        "categories": ["technology", "startups", "programming"],
+        "categories": [
+            "technology",
+            "startups",
+            "programming"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.reuters.com/reuters/topNews",
         "name": "Reuters Top News",
-        "categories": ["world", "politics", "business", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "business",
+            "conflict"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.reuters.com/reuters/technologyNews",
         "name": "Reuters Technology",
-        "categories": ["technology", "ai", "business"],
+        "categories": [
+            "technology",
+            "ai",
+            "business"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.reuters.com/reuters/scienceNews",
         "name": "Reuters Science",
-        "categories": ["science", "space", "health"],
+        "categories": [
+            "science",
+            "space",
+            "health"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.reuters.com/reuters/businessNews",
         "name": "Reuters Business",
-        "categories": ["business", "economy", "finance", "markets"],
+        "categories": [
+            "business",
+            "economy",
+            "finance",
+            "markets"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.reuters.com/reuters/sportsNews",
         "name": "Reuters Sports",
-        "categories": ["sports"],
+        "categories": [
+            "sports"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.aljazeera.com/xml/rss/all.xml",
         "name": "Al Jazeera",
-        "categories": ["world", "politics", "conflict", "middle-east"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict",
+            "middle-east"
+        ],
         "region": "middle-east"
     },
     {
         "url": "https://rss.dw.com/xml/rss-en-world",
         "name": "DW World",
-        "categories": ["world", "politics", "europe", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "europe",
+            "conflict"
+        ],
         "region": "europe"
     },
     {
         "url": "https://rss.dw.com/xml/rss-en-sci",
         "name": "DW Science",
-        "categories": ["science", "environment", "technology"],
+        "categories": [
+            "science",
+            "environment",
+            "technology"
+        ],
         "region": "europe"
     },
     {
         "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
         "name": "Times of India Top Stories",
-        "categories": ["world", "politics", "india"],
+        "categories": [
+            "world",
+            "politics",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
         "name": "Times of India Technology",
-        "categories": ["technology", "india"],
+        "categories": [
+            "technology",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
         "name": "NDTV Top Stories",
-        "categories": ["world", "politics", "elections", "india"],
+        "categories": [
+            "world",
+            "politics",
+            "elections",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://feeds.feedburner.com/ndtvnews-india-news",
         "name": "NDTV India",
-        "categories": ["politics", "elections", "government", "india"],
+        "categories": [
+            "politics",
+            "elections",
+            "government",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://www.thehindu.com/news/national/feeder/default.rss",
         "name": "The Hindu National",
-        "categories": ["politics", "elections", "government", "india"],
+        "categories": [
+            "politics",
+            "elections",
+            "government",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://indianexpress.com/section/political-pulse/feed/",
         "name": "Indian Express Political Pulse",
-        "categories": ["politics", "elections", "government", "india"],
+        "categories": [
+            "politics",
+            "elections",
+            "government",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml",
         "name": "Hindustan Times India",
-        "categories": ["politics", "elections", "world", "india"],
+        "categories": [
+            "politics",
+            "elections",
+            "world",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://www.livemint.com/rss/politics",
         "name": "LiveMint Politics",
-        "categories": ["politics", "elections", "government", "india"],
+        "categories": [
+            "politics",
+            "elections",
+            "government",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://thewire.in/feed",
         "name": "The Wire",
-        "categories": ["politics", "elections", "india", "world"],
+        "categories": [
+            "politics",
+            "elections",
+            "india",
+            "world"
+        ],
         "region": "india"
     },
     {
         "url": "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
         "name": "Economic Times Top Stories",
-        "categories": ["business", "economy", "politics", "india"],
+        "categories": [
+            "business",
+            "economy",
+            "politics",
+            "india"
+        ],
         "region": "india"
     },
     {
         "url": "https://www.economist.com/science-and-technology/rss.xml",
         "name": "The Economist Science & Tech",
-        "categories": ["science", "technology"],
+        "categories": [
+            "science",
+            "technology"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.economist.com/international/rss.xml",
         "name": "The Economist International",
-        "categories": ["world", "politics", "economy"],
+        "categories": [
+            "world",
+            "politics",
+            "economy"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.nature.com/nature/rss/current",
         "name": "Nature",
-        "categories": ["science", "health", "environment", "space"],
+        "categories": [
+            "science",
+            "health",
+            "environment",
+            "space"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
         "name": "NASA Breaking News",
-        "categories": ["space", "science"],
+        "categories": [
+            "space",
+            "science"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.espn.com/espn/rss/news",
         "name": "ESPN",
-        "categories": ["sports", "football", "basketball", "baseball"],
+        "categories": [
+            "sports",
+            "football",
+            "basketball",
+            "baseball"
+        ],
         "region": "us"
     },
     {
         "url": "https://www.euronews.com/rss",
         "name": "Euronews",
-        "categories": ["world", "europe", "politics", "conflict"],
+        "categories": [
+            "world",
+            "europe",
+            "politics",
+            "conflict"
+        ],
         "region": "europe"
     },
     {
         "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
         "name": "CNBC Top News",
-        "categories": ["business", "finance", "markets", "economy"],
+        "categories": [
+            "business",
+            "finance",
+            "markets",
+            "economy"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html",
         "name": "CNBC Technology",
-        "categories": ["technology", "business", "ai"],
+        "categories": [
+            "technology",
+            "business",
+            "ai"
+        ],
         "region": "global"
     },
     {
         "url": "https://rss.nytimes.com/services/xml/rss/nyt/Climate.xml",
         "name": "NYT Climate",
-        "categories": ["climate", "environment", "science"],
+        "categories": [
+            "climate",
+            "environment",
+            "science"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.washingtonpost.com/rss/world",
         "name": "Washington Post World",
-        "categories": ["world", "politics", "conflict"],
+        "categories": [
+            "world",
+            "politics",
+            "conflict"
+        ],
         "region": "global"
     },
     {
         "url": "https://feeds.washingtonpost.com/rss/politics",
         "name": "Washington Post Politics",
-        "categories": ["politics", "government", "elections"],
+        "categories": [
+            "politics",
+            "government",
+            "elections"
+        ],
         "region": "us"
     },
     {
         "url": "https://feeds.washingtonpost.com/rss/business/technology",
         "name": "Washington Post Technology",
-        "categories": ["technology", "business", "ai"],
+        "categories": [
+            "technology",
+            "business",
+            "ai"
+        ],
         "region": "us"
     },
     {
         "url": "https://www.cnet.com/rss/news/",
         "name": "CNET",
-        "categories": ["technology", "ai", "gadgets"],
+        "categories": [
+            "technology",
+            "ai",
+            "gadgets"
+        ],
         "region": "global"
     },
     {
         "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
         "name": "TechCrunch AI",
-        "categories": ["ai", "technology", "startups"],
+        "categories": [
+            "ai",
+            "technology",
+            "startups"
+        ],
         "region": "global"
     },
     {
         "url": "https://www.sciencedaily.com/rss/top.xml",
         "name": "Science Daily",
-        "categories": ["science", "health", "environment", "space"],
+        "categories": [
+            "science",
+            "health",
+            "environment",
+            "space"
+        ],
         "region": "global"
+    },
+    {
+        "url": "https://www.thehindu.com/business/Economy/feeder/default.rss",
+        "name": "The Hindu Economy",
+        "categories": [
+            "india",
+            "economics",
+            "indian economics"
+        ],
+        "region": "india"
     }
 ]

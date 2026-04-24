@@ -301,7 +301,7 @@ else:
         st.subheader("Feed Manager")
 
         # ── Add New Feed ──
-        with st.expander("➕ Add New Feed"):
+        with st.expander("Add New Feed"):
             new_url = st.text_input("Feed URL", placeholder="https://example.com/rss/feed.xml", key="new_feed_url")
             new_name = st.text_input("Feed Name", placeholder="e.g. TechCrunch AI", key="new_feed_name")
             new_cats = st.text_input("Categories", placeholder="technology, ai, startups", key="new_feed_cats",

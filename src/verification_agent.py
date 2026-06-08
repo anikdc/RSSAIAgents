@@ -4,17 +4,41 @@ import logging
 from urllib.parse import urlparse
 from datetime import datetime, timezone
 from sentence_transformers import SentenceTransformer, util
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+SENTENCE_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Module-level cache: load the model once, reuse across all instances
 _SENTENCE_MODEL = None
 
+
+def _env_flag(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _get_sentence_model():
     global _SENTENCE_MODEL
     if _SENTENCE_MODEL is None:
-        logger.info("Loading SentenceTransformer model (first time)...")
-        _SENTENCE_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+        cache_folder = os.getenv("SENTENCE_TRANSFORMERS_HOME") or None
+        local_only = _env_flag("SENTENCE_TRANSFORMERS_LOCAL_ONLY") or _env_flag("HF_HUB_OFFLINE")
+        logger.info(
+            "Loading SentenceTransformer model %s (local_only=%s, cache_folder=%s)",
+            SENTENCE_MODEL_NAME,
+            local_only,
+            cache_folder or "default",
+        )
+        _SENTENCE_MODEL = SentenceTransformer(
+            SENTENCE_MODEL_NAME,
+            cache_folder=cache_folder,
+            local_files_only=local_only,
+        )
     return _SENTENCE_MODEL
 
 

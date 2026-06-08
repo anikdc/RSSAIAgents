@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 import logging
 from dotenv import load_dotenv
 
@@ -24,19 +24,18 @@ class SynthesisAgent:
             
             if GROQ_AVAILABLE:
                 self.client = Groq(api_key=self.api_key)
-                self.groq_model = os.getenv("GROQ_MODEL", "qwen-2.5-32b")
+                self.groq_model = os.getenv("GROQ_MODEL", "groq/compound-mini")
             else:
-                logger.error("groq package not installed but LLM_PROVIDER is groq. Run `pip install groq`.")
+                logger.error("groq package not installed but LLM_PROVIDER is groq. Run `uv sync --extra groq`.")
                 
         else: # Default to gemini
             self.api_key = os.getenv("GEMINI_API_KEY")
             if not self.api_key:
                 logger.warning("GEMINI_API_KEY not found. Synthesis will fail.")
+                self.client = None
             else:
-                genai.configure(api_key=self.api_key)
-                # Pull the target Gemini model from env
-                gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
-                self.model = genai.GenerativeModel(gemini_model)
+                self.client = genai.Client(api_key=self.api_key)
+                self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
     def synthesize_briefing(self, articles_content, sources_meta=None):
         """
@@ -94,7 +93,12 @@ class SynthesisAgent:
                 )
                 return response.choices[0].message.content
             else:
-                response = self.model.generate_content(prompt)
+                if not self.client:
+                    return "Error generating briefing."
+                response = self.client.models.generate_content(
+                    model=self.gemini_model,
+                    contents=prompt,
+                )
                 return response.text
                 
         except Exception as e:

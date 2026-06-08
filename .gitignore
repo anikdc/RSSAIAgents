@@ -1,10 +1,21 @@
-venv/
+# Python artifacts
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Local configuration and secrets
 .env
 .streamlit/secrets.toml
+AGENTS.md
+LOCAL_ISSUES.md
+
+# Runtime outputs
 agent.log
 briefing_data.json
 active_feeds.json
+
+# OS metadata
 .DS_Store
-evaluate_clustering.py

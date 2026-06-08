@@ -300,7 +300,7 @@ else:
         st.divider()
         st.subheader("Feed Manager")
 
-        # ── Add New Feed ──
+        # Add New Feed
         with st.expander("Add New Feed"):
             new_url = st.text_input("Feed URL", placeholder="https://example.com/rss/feed.xml", key="new_feed_url")
             new_name = st.text_input("Feed Name", placeholder="e.g. TechCrunch AI", key="new_feed_name")
@@ -311,16 +311,16 @@ else:
                                       help="Trusted feeds are polled automatically during every general briefing.")
 
             if st.button("Add Feed", use_container_width=True, key="btn_add_feed"):
-                with st.spinner("Validating feed…"):
+                with st.spinner("Validating feed..."):
                     ok, msg = add_feed(new_url, new_name, new_cats, new_region, new_trusted)
                 if ok:
-                    st.success(f"✅ Feed added! {msg}")
+                    st.success(f"Feed added. {msg}")
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error(f"❌ {msg}")
+                    st.error(msg)
 
-        # ── Manage Existing Feeds ──
+        # Manage Existing Feeds
         with st.expander("Manage Feeds"):
             tab_trusted, tab_db = st.tabs(["Trusted Feeds", "Database"])
 
@@ -334,7 +334,7 @@ else:
                         with col_url:
                             st.caption(url)
                         with col_btn:
-                            if st.button("❌", key=f"rm_trusted_{idx}", help="Remove from trusted feeds"):
+                            if st.button("Remove", key=f"rm_trusted_{idx}", help="Remove from trusted feeds"):
                                 remove_feed_from_trusted(url)
                                 st.rerun()
 
@@ -348,11 +348,11 @@ else:
                         col_info, col_btn = st.columns([4, 1])
                         is_trusted = feed["url"] in trusted_set
                         with col_info:
-                            label = f"{'⭐ ' if is_trusted else ''}{feed.get('name', 'Unnamed')}"
+                            label = f"{'[trusted] ' if is_trusted else ''}{feed.get('name', 'Unnamed')}"
                             cats = ", ".join(feed.get("categories", []))
                             st.markdown(f"**{label}**")
-                            st.caption(f"{feed['url']}  \n_{feed.get('region', 'global')} · {cats}_")
+                            st.caption(f"{feed['url']}  \n_{feed.get('region', 'global')} - {cats}_")
                         with col_btn:
-                            if st.button("❌", key=f"rm_db_{idx}", help="Remove from database"):
+                            if st.button("Remove", key=f"rm_db_{idx}", help="Remove from database"):
                                 remove_feed_from_db(feed["url"])
                                 st.rerun()

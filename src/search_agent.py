@@ -1,7 +1,8 @@
 import os
 import json
 import logging
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 try:
@@ -29,7 +30,7 @@ class SearchAgent:
             if GROQ_AVAILABLE:
                 self.client = Groq(api_key=self.api_key)
                 # Using a faster, smaller model for simple JSON extraction
-                self.groq_model = os.getenv("GROQ_MODEL", "llama3-8b-8192")
+                self.groq_model = os.getenv("GROQ_MODEL", "groq/compound-mini")
             else:
                 logger.error("groq package not installed but LLM_PROVIDER is groq.")
                 
@@ -37,10 +38,10 @@ class SearchAgent:
             self.api_key = os.getenv("GEMINI_API_KEY")
             if not self.api_key:
                 logger.warning("GEMINI_API_KEY not found. Query parsing will fail.")
+                self.client = None
             else:
-                genai.configure(api_key=self.api_key)
-                gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-                self.model = genai.GenerativeModel(gemini_model)
+                self.client = genai.Client(api_key=self.api_key)
+                self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
     def _load_db(self):
         try:
@@ -101,9 +102,12 @@ class SearchAgent:
             else:
                 # Gemini doesn't strictly enforce JSON object return without schema,
                 # but standard prompting works well with flash
-                response = self.model.generate_content(
-                    f"{system_prompt}\n\nUser Query: {user_query}",
-                    generation_config={"response_mime_type": "application/json"}
+                if not self.client:
+                    raise RuntimeError("Gemini client is not configured.")
+                response = self.client.models.generate_content(
+                    model=self.gemini_model,
+                    contents=f"{system_prompt}\n\nUser Query: {user_query}",
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
                 )
                 output = response.text
                 

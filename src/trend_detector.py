@@ -1,9 +1,9 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import numpy as np
 from sklearn.cluster import DBSCAN, KMeans, HDBSCAN
 from sklearn.preprocessing import normalize
-from sklearn.metrics.pairwise import cosine_distances
 import logging
 from dotenv import load_dotenv
 
@@ -15,8 +15,9 @@ class TrendDetector:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             logger.warning("GEMINI_API_KEY not found. Embeddings will fail.")
+            self.client = None
         else:
-            genai.configure(api_key=self.api_key)
+            self.client = genai.Client(api_key=self.api_key)
         
         # DBSCAN parameters:
         # eps is the maximum distance between two samples for one to be considered as in the neighborhood of the other.
@@ -24,6 +25,19 @@ class TrendDetector:
         # Cosine distance ranges from 0 to 2. Gemini embeddings are often densely packed.
         self.eps = 0.10 # lowered from 0.25 to prevent mega-clusters
         self.min_samples = 2 # Minimum articles to form a cluster
+
+    def _result(self, clusters=None, articles=None):
+        return {
+            "clusters": clusters or [],
+            "articles_with_coords": articles or [],
+        }
+
+    def _annotate_as_noise(self, articles):
+        for article in articles:
+            article['cluster'] = -1
+            article['x'] = 0.0
+            article['y'] = 0.0
+        return articles
         
     def vectorize_texts(self, texts):
         """
@@ -31,16 +45,26 @@ class TrendDetector:
         """
         if not texts:
             return []
+        if not self.client:
+            return []
         
         try:
             # Pull embedding model from .env fallback to gemini-embedding-001
             embedding_model = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
-            result = genai.embed_content(
+            result = self.client.models.embed_content(
                 model=embedding_model,
-                content=texts,
-                task_type="clustering",
+                contents=texts,
+                config=types.EmbedContentConfig(task_type="CLUSTERING"),
             )
-            return result['embedding']
+            embeddings = [embedding.values for embedding in (result.embeddings or [])]
+            if len(embeddings) != len(texts):
+                logger.error(
+                    "Embedding count mismatch: requested %s texts but received %s embeddings from %s.",
+                    len(texts),
+                    len(embeddings),
+                    embedding_model,
+                )
+            return embeddings
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             return []
@@ -56,7 +80,7 @@ class TrendDetector:
         in the same batch as the headlines).
         """
         if not articles:
-            return []
+            return self._result()
             
         headlines = []
         for art in articles:
@@ -70,7 +94,8 @@ class TrendDetector:
         vectors = self.vectorize_texts(headlines)
         
         if not vectors:
-            return []
+            logger.warning("No embeddings generated. Returning articles without clusters.")
+            return self._result(articles=self._annotate_as_noise(articles))
         
         # Pop the query vector back out and filter by cosine similarity
         if search_query and vectors:
@@ -90,7 +115,19 @@ class TrendDetector:
             
             if not articles:
                 logger.warning("All articles filtered out by semantic relevance. Returning empty.")
-                return {"clusters": [], "articles_with_coords": []}
+                return self._result()
+
+        if len(vectors) != len(articles):
+            logger.error(
+                "Cannot cluster because embedding/article counts differ: %s embeddings for %s articles.",
+                len(vectors),
+                len(articles),
+            )
+            return self._result(articles=self._annotate_as_noise(articles))
+
+        if len(vectors) < 2:
+            logger.info("Need at least 2 embedded articles to cluster; got %s.", len(vectors))
+            return self._result(articles=self._annotate_as_noise(articles))
             
         X = np.array(vectors)
         
@@ -101,13 +138,16 @@ class TrendDetector:
             # HDBSCAN clusters dynamically. It doesn't strictly need eps.
             # Normalizing X to L2 makes euclidean distance equivalent to cosine distance.
             X_norm = normalize(X)
-            model = HDBSCAN(min_cluster_size=max(2, self.min_samples))
+            model = HDBSCAN(
+                min_cluster_size=min(len(X_norm), max(2, self.min_samples)),
+                copy=False,
+            )
             model.fit(X_norm)
             labels = model.labels_
             
         elif algorithm == "kmeans":
             # KMeans requires knowing K. We guess ~10 articles per trend on average
-            k = max(2, min(len(X) // 5, 20))
+            k = min(len(X), max(2, min(len(X) // 5, 20)))
             # KMeans uses euclidean distance, so we L2 normalize the vectors first
             # to make it behave similarly to spherical k-means / cosine similarity
             X_norm = normalize(X)

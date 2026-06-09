@@ -1,0 +1,15 @@
+{
+  "name": "rssaiagents-mern-migration",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace frontend run dev",
+    "dev:mern": "npm --workspace backend run dev",
+    "start:api": "npm --workspace backend start",
+    "build:web": "npm --workspace frontend run build"
+  }
+}

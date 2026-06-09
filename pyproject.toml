@@ -1,21 +1,25 @@
 [project]
 name = "rssaiagents"
 version = "0.1.0"
-description = "AI news trend briefing pipeline with RSS polling, clustering, verification, and Streamlit UI."
+description = "AI news trend briefing pipeline with RSS polling, clustering, verification, Streamlit UI, and MERN migration services."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "beautifulsoup4",
+    "fastapi",
     "feedparser",
     "google-genai",
     "hdbscan",
     "lxml",
     "numpy",
+    "pydantic",
+    "pymongo",
     "python-dotenv",
     "requests",
     "scikit-learn>=1.3",
     "sentence-transformers",
     "streamlit",
+    "uvicorn",
 ]
 
 [project.optional-dependencies]

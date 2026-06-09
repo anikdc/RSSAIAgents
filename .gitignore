@@ -16,6 +16,13 @@ LOCAL_ISSUES.md
 agent.log
 briefing_data.json
 active_feeds.json
+.runtime/
+
+# Node artifacts
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # OS metadata
 .DS_Store

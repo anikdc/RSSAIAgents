@@ -1,6 +1,8 @@
 # AI News Trend Agent
 
-AI News Trend Agent is a Python news briefing pipeline. It polls RSS feeds, scores source credibility, clusters related stories with embeddings, scrapes article text, and generates a synthesized briefing with Google Gemini. A Streamlit app displays the generated briefing and raw feed data.
+AI News Trend Agent is a news briefing pipeline. It polls RSS feeds, scores source credibility, clusters related stories with embeddings, scrapes article text, and generates a synthesized briefing with Google Gemini.
+
+The original Streamlit UI still works. A MERN migration is now being built beside it: React for the dashboard, Express for the frontend-facing API, MongoDB for durable persistence, and FastAPI as a thin Python worker around the existing AI pipeline.
 
 ## Flowchart
 
@@ -10,6 +12,8 @@ AI News Trend Agent is a Python news briefing pipeline. It polls RSS feeds, scor
 
 - Python 3.14 or compatible Python 3.10+
 - uv
+- Node.js 18+ for the MERN services
+- MongoDB, optional while JSON fallback is enabled
 - Google Gemini API key
 
 ## Setup
@@ -20,6 +24,7 @@ AI News Trend Agent is a Python news briefing pipeline. It polls RSS feeds, scor
 
    ```bash
    uv sync
+   npm install
    ```
 
 3. Create a local environment file.
@@ -38,6 +43,24 @@ AI News Trend Agent is a Python news briefing pipeline. It polls RSS feeds, scor
    ```
 
 ## Usage
+
+Run the Python worker API:
+
+```bash
+uv run uvicorn src.api:app --host 127.0.0.1 --port 8000
+```
+
+Run the Express API in another terminal:
+
+```bash
+npm run dev:api
+```
+
+Run the React dashboard in another terminal:
+
+```bash
+npm run dev:web
+```
 
 Run the Streamlit UI:
 
@@ -75,6 +98,14 @@ The project reads configuration from `.env`.
 - `HF_HUB_OFFLINE`: Set to `1` to prevent Hugging Face network checks.
 - `GROQ_API_KEY`: Required only when `LLM_PROVIDER=groq`.
 - `GROQ_MODEL`: Groq model used when the optional Groq provider is enabled.
+- `PYTHON_WORKER_PORT`: Port for the FastAPI worker. Default: `8000`.
+- `PYTHON_WORKER_MAX_JOBS`: Maximum concurrent Python worker jobs. Default: `2`.
+- `EXPRESS_PORT`: Port for the Express API. Default: `4000`.
+- `PYTHON_WORKER_URL`: URL Express uses to call FastAPI. Default: `http://127.0.0.1:8000`.
+- `FRONTEND_ORIGIN`: Allowed frontend origin for Express CORS. Default: `http://127.0.0.1:5173`.
+- `VITE_API_BASE`: Express API base URL used by React. Default: `http://127.0.0.1:4000`.
+- `MONGODB_URI`: MongoDB connection string. Leave empty to use local JSON fallback.
+- `MONGODB_DB`: MongoDB database name. Default: `rssaiagents`.
 
 To install the optional Groq dependency:
 
@@ -85,11 +116,15 @@ uv sync --extra groq
 ## Project Files
 
 - `app.py`: Streamlit interface for the briefing and feed controls.
+- `frontend/`: React dashboard for the MERN migration.
+- `backend/`: Express API gateway for the MERN migration.
 - `feeds_default.json`: Default RSS feed list.
 - `feeds_db.json`: Searchable feed database used by the search agent.
 - `pyproject.toml`: Project metadata and uv dependency declarations.
 - `uv.lock`: Locked dependency graph for reproducible installs.
 - `src/orchestrator.py`: Coordinates polling, verification, clustering, scraping, synthesis, and output writing.
+- `src/api.py`: FastAPI worker API for asynchronous pipeline jobs.
+- `src/persistence.py`: MongoDB persistence adapter with JSON fallback.
 - `src/rss_poller.py`: Fetches and parses RSS feeds.
 - `src/verification_agent.py`: Scores articles and handles SentenceTransformer-based corroboration.
 - `src/trend_detector.py`: Generates Gemini embeddings and clusters articles with DBSCAN, HDBSCAN, or KMeans.
@@ -106,10 +141,13 @@ These files are generated locally and are not committed:
 - `agent.log`
 - `briefing_data.json`
 - `active_feeds.json`
+- `.runtime/`
+- `node_modules/`
+- `frontend/dist/`
 
 ## Roadmap
 
-- Replace the Streamlit frontend with a MERN stack.
-- Decouple the Python worker from the frontend.
-- Store pipeline outputs in MongoDB instead of JSON.
-- Serve briefing data through an Express API.
+- Keep Streamlit available until the React dashboard reaches feature parity.
+- Expand MongoDB persistence and cache reuse for verification, scraped text, embeddings, and search intent.
+- Add production-grade job cancellation, retries, and authentication.
+- Retire Streamlit after the MERN stack is the primary workflow.
